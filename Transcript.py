@@ -119,18 +119,22 @@ class Transcript(tk.Toplevel):
     def seek(self, event):
         self.time_nav_mutex.acquire()
 
-        # Seek to the next or previous sentence
-        # Down
-        if event.keysym == "Down" and self.current_sentence < len(self.transcript) - 1:
-            self.current_sentence += 1
-        # Up
-        elif event.keysym == "Up" and self.current_sentence > 0:
-            self.current_sentence -= 1
-        # ctrl + r
+        # Seek to the previous, current or next sentence
+        if event.keysym == "Down":
+            increment = 1
+        elif event.keysym == "Up":
+            increment = -1
         elif event.keysym == "r":
-            pass
+            increment = 0
         else:
-            raise ValueError("Invalid key")
+            self.time_nav_mutex.release()
+            return
+
+        if not 0 <= self.current_sentence + increment < len(self.transcript):
+            self.time_nav_mutex.release()
+            return
+
+        self.current_sentence += increment
 
         start_timestamp, _, _ = self.transcript[self.current_sentence]
         self.player.set_time(int(start_timestamp) * 1000)
