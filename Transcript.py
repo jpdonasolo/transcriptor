@@ -6,8 +6,6 @@ from threading import Lock
 import tkinter as tk
 from tkinter import messagebox
 
-import vlc
-
 from utils import *    
 from AudioPlayer import AudioPlayer
 
@@ -15,6 +13,10 @@ from AudioPlayer import AudioPlayer
 class Transcript(tk.Toplevel):
     def __init__(self, master, audio_path, transcript_path):
         
+        if audio_path == "" or transcript_path == "":
+            audio_path = "/home/joao/Documents/transcriptor/aula.mp4"
+            transcript_path = "/home/joao/Documents/transcriptor/aula.txt"
+
         self.time_nav_mutex = Lock()
 
         super().__init__(master)
