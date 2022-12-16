@@ -62,7 +62,7 @@ class Transcript(tk.Toplevel):
         self.bind("<Down>", lambda e: self.seek(e))
 
         # Restart current sentence
-        self.bind("<Control-r>", lambda e: self.restart(e))
+        self.bind("<Control-r>", lambda e: self.seek(e))
 
         # Entry
         tk.Entry(self).pack(anchor=tk.S, fill=tk.X, padx=10, pady=10)
@@ -71,6 +71,13 @@ class Transcript(tk.Toplevel):
         self.text_frame = tk.LabelFrame(self)
         self.clean_labels()
         self.pack_labels()
+
+    def update(self, subject: AudioPlayer):
+        time = subject.get_time()
+
+        sentence_idx = self.find_idx_from_time(time)
+        self.clean_labels()
+        self.pack_labels(sentence_idx)
 
     def run(self):
         while self.is_open:
@@ -93,19 +100,22 @@ class Transcript(tk.Toplevel):
         self.text_frame.pack_forget()
         self.text_frame.pack(anchor=tk.N, fill=tk.BOTH, padx=10, pady=10)
     
-    def pack_labels(self):
+    def pack_labels(self, curr_sentence_idx=None):
+        if curr_sentence_idx is None:
+            curr_sentence_idx = 0
+        
         # Pack labels for the current, previous and next 5 sentences
         # If current_sentence is less than 5, pack the first 10 sentences
         # If current_sentence is greater than len(transcript) - 5, pack the last 10 sentences
-        if self.current_sentence < 5:
+        if curr_sentence_idx < 5:
             start_sentence = 0
             end_sentence = 10
-        elif self.current_sentence > len(self.transcript) - 5:
+        elif curr_sentence_idx > len(self.transcript) - 5:
             start_sentence = len(self.transcript) - 10
             end_sentence = len(self.transcript)
         else:
-            start_sentence = self.current_sentence - 5
-            end_sentence = self.current_sentence + 5
+            start_sentence = curr_sentence_idx - 5
+            end_sentence = curr_sentence_idx + 5
 
         # Pack the sentences and highlight the current one
         for sentence_idx in range(start_sentence, end_sentence):
@@ -146,9 +156,6 @@ class Transcript(tk.Toplevel):
 
         self.time_nav_mutex.release()
 
-    def restart(self, event):
-        self.seek(event)
-        
     def raise_for_invalid_path(self, path):
         if not os.path.exists(path):
             raise FileNotFoundError(path)
