@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from utils import *    
-from AudioPlayer import AudioPlayer
+from AudioController import AudioPlayer
 
 
 class Transcript(tk.Toplevel):
