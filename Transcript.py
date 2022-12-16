@@ -11,16 +11,12 @@ from AudioController import AudioController
 
 class Transcript(tk.Toplevel):
     def __init__(self, master, audio_controller: AudioController, transcript_path):
-
-        self.time_nav_mutex = Lock()
-
         super().__init__(master)
         self.setup(audio_controller, transcript_path)
         
-    def setup(self, audio_controller, transcript_path):
+    def setup(self, audio_controller: AudioController, transcript_path):
         # Vars
         self.is_open = True
-        self.current_sentence = 0
 
         # Screen config
         self.title("Transcript")
@@ -39,11 +35,11 @@ class Transcript(tk.Toplevel):
         # self.bind("<Control-e>", lambda e: self.on_closing())
 
         # Seek to the next or previous sentence
-        # self.bind("<Up>", lambda e: self.seek(e))
-        # self.bind("<Down>", lambda e: self.seek(e))
+        self.bind("<Up>", lambda e: self.seek(e))
+        self.bind("<Down>", lambda e: self.seek(e))
 
         # Restart current sentence
-        # self.bind("<Control-r>", lambda e: self.seek(e))
+        self.bind("<Control-r>", lambda e: self.seek(e))
 
         # Entry
         tk.Entry(self).pack(anchor=tk.S, fill=tk.X, padx=10, pady=10)
@@ -55,7 +51,6 @@ class Transcript(tk.Toplevel):
 
     def update(self, curr_sentence: int):
         self.clean_labels()
-        print("curr_sentence", curr_sentence)
         self.pack_labels(curr_sentence)
 
     def clean_labels(self):
@@ -92,33 +87,26 @@ class Transcript(tk.Toplevel):
                 font=("Helvetica", 12, "bold") if sentence_idx == curr_sentence 
                                                else None).pack(anchor=tk.W)
 
-    # def seek(self, event):
-    #     self.time_nav_mutex.acquire()
+    def seek(self, event):
+        curr_sentence = self.player.curr_sentence
 
-    #     # Seek to the previous, current or next sentence
-    #     if event.keysym == "Down":
-    #         increment = 1
-    #     elif event.keysym == "Up":
-    #         increment = -1
-    #     elif event.keysym == "r":
-    #         increment = 0
-    #     else:
-    #         self.time_nav_mutex.release()
-    #         return
+        # Seek to the previous, current or next sentence
+        if event.keysym == "Down":
+            increment = 1
+        elif event.keysym == "Up":
+            increment = -1
+        elif event.keysym == "r":
+            increment = 0
+        else:
+            return
 
-    #     if not 0 <= self.current_sentence + increment < len(self.transcript):
-    #         self.time_nav_mutex.release()
-    #         return
+        new_sentence = curr_sentence + increment
 
-    #     self.current_sentence += increment
+        if not 0 <= new_sentence < len(self.transcript):
+            return
 
-    #     start_timestamp, _, _ = self.transcript[self.current_sentence]
-    #     self.player.set_time(int(start_timestamp))
-
-    #     self.clean_labels()
-    #     self.pack_labels()
-
-    #     self.time_nav_mutex.release()
+        start_timestamp, _, _ = self.transcript[new_sentence]
+        self.player.set_sentence_and_time(new_sentence, int(start_timestamp))
 
     def pause_resume(self):
         self.player.pause_resume()

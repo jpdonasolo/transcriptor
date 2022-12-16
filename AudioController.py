@@ -55,7 +55,6 @@ class AudioPlayer:
         self.time_nav_mutex.acquire()
         self.player.set_time(time * 1000)
         self.time_nav_mutex.release()
-        self.notify()
     
     def is_playing(self):
         return self.player.is_playing()
@@ -91,10 +90,10 @@ class AudioController(AudioPlayer, Subject):
         self.curr_sentence_mutex.release()
         self.notify(sentence)
     
-    def set_sentence_and_time(self, sentence, time):
+    def set_sentence_and_time(self, new_sentence, time):
         self.pause()
         self.set_time(time)
-        self.curr_sentence = sentence
+        self.curr_sentence = new_sentence
         self.play()
     
     def start(self):
