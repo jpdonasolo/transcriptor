@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
+from AudioController import AudioController
 from Transcript import Transcript
+from utils import *
 
 class App(tk.Tk):
     def __init__(self):
@@ -63,7 +65,20 @@ class App(tk.Tk):
         return filedialog.askopenfilename(**kwargs)
 
     def transcript(self, audio_path, transcript_path):
-        Transcript(self, audio_path, transcript_path)
+
+        if audio_path == "" or transcript_path == "":
+            audio_path = "/home/joao/Documents/transcriptor/aula.mp4"
+            transcript_path = "/home/joao/Documents/transcriptor/aula.txt"
+        
+        try:
+            raise_for_invalid_path(audio_path)
+            raise_for_invalid_path(transcript_path)
+        except FileNotFoundError as e:
+            messagebox.showerror("Error", f"Invalid path: '{str(e)}'")
+            return
+
+        audio_controller = AudioController(audio_path, transcript_path)
+        audio_controller.attach(Transcript(self, audio_path, transcript_path))
 
 if __name__ == "__main__":
     app = App()

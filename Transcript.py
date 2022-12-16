@@ -4,18 +4,13 @@ import threading
 from threading import Lock
 
 import tkinter as tk
-from tkinter import messagebox
 
 from utils import *    
-from AudioController import AudioPlayer
+from AudioController import AudioController
 
 
 class Transcript(tk.Toplevel):
     def __init__(self, master, audio_path, transcript_path):
-        
-        if audio_path == "" or transcript_path == "":
-            audio_path = "/home/joao/Documents/transcriptor/aula.mp4"
-            transcript_path = "/home/joao/Documents/transcriptor/aula.txt"
 
         self.time_nav_mutex = Lock()
 
@@ -39,15 +34,7 @@ class Transcript(tk.Toplevel):
         self.resizable(False, False)
 
         # Set up the audio player and transcript
-        try:
-            self.raise_for_invalid_path(audio_path)
-            self.raise_for_invalid_path(transcript_path)
-        except FileNotFoundError as e:
-            messagebox.showerror("Error", f"Invalid path: '{str(e)}'")
-            self.destroy()
-            raise
-        
-        self.player = AudioPlayer(audio_path, transcript_path)
+        self.player = AudioController(audio_path, transcript_path)
         self.transcript = read_transcript(transcript_path)
 
         # Protocols
@@ -72,7 +59,7 @@ class Transcript(tk.Toplevel):
         self.clean_labels()
         self.pack_labels()
 
-    def update(self, subject: AudioPlayer):
+    def update(self, subject: AudioController):
         time = subject.get_time()
 
         sentence_idx = self.find_idx_from_time(time)
@@ -83,7 +70,7 @@ class Transcript(tk.Toplevel):
         while self.is_open:
             self.time_nav_mutex.acquire()
 
-            current_time = self.player.get_time() / 1000
+            current_time = self.player.get_time()
 
             _, end_timestamp, _ = self.transcript[self.current_sentence]
             if current_time + 0.1 >= int(end_timestamp):
@@ -149,7 +136,7 @@ class Transcript(tk.Toplevel):
         self.current_sentence += increment
 
         start_timestamp, _, _ = self.transcript[self.current_sentence]
-        self.player.set_time(int(start_timestamp) * 1000)
+        self.player.set_time(int(start_timestamp))
 
         self.clean_labels()
         self.pack_labels()

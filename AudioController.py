@@ -53,7 +53,7 @@ class AudioPlayer:
     
     def set_time(self, time):
         self.time_nav_mutex.acquire()
-        self.player.set_time(time) * 1000
+        self.player.set_time(time * 1000)
         self.time_nav_mutex.release()
         self.notify()
     
