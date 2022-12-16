@@ -13,7 +13,7 @@ class Subject:
 
     def notify(self, *args, **kwargs):
         for observer in self._observers:
-            observer.update(self)
+            observer.update(*args, **kwargs)
     
     def attach(self, observer):
         if observer not in self._observers:
@@ -71,6 +71,7 @@ class AudioController(AudioPlayer, Subject):
         self.curr_sentence_mutex = RLock()
         self._curr_sentence = 0
 
+        self.is_running_mutex = RLock()
         self.is_running = False
         self.thread = None
 
@@ -109,22 +110,24 @@ class AudioController(AudioPlayer, Subject):
 
                 if int(time) + .05 >= int(end_timestamp):
                     self.curr_sentence += 1
-                    print(self.curr_sentence)
                 self.time_nav_mutex.release()
         
         self.thread = Thread(target=_run)
         self.start_thread()
 
     def stop(self):
-        self.is_running = False
         self.stop_thread()
         AudioPlayer.stop(self)
 
     def start_thread(self):
-        self.thread.start()
+        self.is_running_mutex.acquire()
         self.is_running = True
+        self.is_running_mutex.release()
+        self.thread.start()
 
     def stop_thread(self):
+        self.is_running_mutex.acquire()
         self.is_running = False
+        self.is_running_mutex.release()
         if self.thread:
             self.thread.join()
