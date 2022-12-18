@@ -18,21 +18,11 @@ class StaticTranscript(tk.Toplevel):
         self.geometry("500x400")
         self.resizable(False, False)
 
-        # Set up the audio player and transcript
-
         # Protocols
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # Bindings
-        self.bind("<Control-b>", lambda e: self.pause_resume())
-        # self.bind("<Control-e>", lambda e: self.on_closing())
-
-        # Seek to the next or previous sentence
-        self.bind("<Up>", lambda e: self.seek(e))
-        self.bind("<Down>", lambda e: self.seek(e))
-
-        # Restart current sentence
-        self.bind("<Control-r>", lambda e: self.seek(e))
+        self.bind("<Control-e>", lambda e: self.on_closing())
 
         # Entry
         tk.Entry(self).pack(anchor=tk.S, fill=tk.X, padx=10, pady=10)
@@ -83,6 +73,19 @@ class Transcript(StaticTranscript):
     def __init__(self, master, audio_controller: AudioController, transcript_path):
         StaticTranscript.__init__(self, master, transcript_path)
         self.player = audio_controller
+    
+    def setup(self):
+        StaticTranscript.setup(self)
+
+        # Bindings
+        self.bind("<Control-b>", lambda e: self.pause_resume())
+        
+        # Seek to the next or previous sentence
+        self.bind("<Up>", lambda e: self.seek(e))
+        self.bind("<Down>", lambda e: self.seek(e))
+
+        # Restart current sentence
+        self.bind("<Control-r>", lambda e: self.seek(e))
 
     def update(self, curr_sentence: int):
         self.clean_labels()
