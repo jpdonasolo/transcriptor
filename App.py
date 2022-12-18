@@ -79,6 +79,7 @@ class App(tk.Tk):
 
         audio_controller = AudioController(audio_path, transcript_path)
         transcript = Transcript(self, audio_controller, transcript_path)
+        transcript.setup()
 
         audio_controller.attach(transcript)
         transcript.mainloop()

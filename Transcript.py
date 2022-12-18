@@ -1,20 +1,15 @@
-import os
-
-import threading
-from threading import Lock
-
 import tkinter as tk
 
 from utils import *    
 from AudioController import AudioController
 
 
-class Transcript(tk.Toplevel):
-    def __init__(self, master, audio_controller: AudioController, transcript_path):
+class StaticTranscript(tk.Toplevel):
+    def __init__(self, master, transcript_path):
         super().__init__(master)
-        self.setup(audio_controller, transcript_path)
-        
-    def setup(self, audio_controller: AudioController, transcript_path):
+        self.transcript = read_transcript(transcript_path)
+
+    def setup(self):
         # Vars
         self.is_open = True
 
@@ -24,8 +19,6 @@ class Transcript(tk.Toplevel):
         self.resizable(False, False)
 
         # Set up the audio player and transcript
-        self.player = audio_controller
-        self.transcript = read_transcript(transcript_path)
 
         # Protocols
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -48,16 +41,6 @@ class Transcript(tk.Toplevel):
         self.text_frame = tk.LabelFrame(self)
         self.clean_labels()
         self.pack_labels()
-
-    def update(self, curr_sentence: int):
-        self.clean_labels()
-        self.pack_labels(curr_sentence)
-
-    def clean_labels(self):
-        for widget in self.text_frame.winfo_children():
-            widget.destroy()
-        self.text_frame.pack_forget()
-        self.text_frame.pack(anchor=tk.N, fill=tk.BOTH, padx=10, pady=10)
     
     def pack_labels(self, curr_sentence=None):
         if curr_sentence is None:
@@ -87,6 +70,24 @@ class Transcript(tk.Toplevel):
                 font=("Helvetica", 12, "bold") if sentence_idx == curr_sentence 
                                                else None).pack(anchor=tk.W)
 
+    def clean_labels(self):
+        for widget in self.text_frame.winfo_children():
+            widget.destroy()
+        self.text_frame.pack_forget()
+        self.text_frame.pack(anchor=tk.N, fill=tk.BOTH, padx=10, pady=10)
+
+    def on_closing(self):        
+        self.destroy()
+
+class Transcript(StaticTranscript):
+    def __init__(self, master, audio_controller: AudioController, transcript_path):
+        StaticTranscript.__init__(self, master, transcript_path)
+        self.player = audio_controller
+
+    def update(self, curr_sentence: int):
+        self.clean_labels()
+        self.pack_labels(curr_sentence)
+
     def seek(self, event):
         curr_sentence = self.player.curr_sentence
 
@@ -107,13 +108,10 @@ class Transcript(tk.Toplevel):
 
         start_timestamp, _, _ = self.transcript[new_sentence]
         self.player.set_sentence_and_time(new_sentence, int(start_timestamp))
-
+    
     def pause_resume(self):
         self.player.pause_resume()
-
-    def on_closing(self):        
-        # Stop player
+    
+    def on_closing(self):
+        super().on_closing()
         self.player.stop()
-
-        # Close window
-        self.destroy()
