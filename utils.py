@@ -11,6 +11,8 @@ def read_transcript(transcript_path):
         transcript = file.read()
     lines = transcript.split("\n")
     lines = [line.split(",", 2) for line in lines]
+    lines = [(line[0], line[1], *line[2].rsplit(",", 1)) for line in lines]
+    lines = [(int(line[0]), int(line[1]), line[2], bool(int(line[3]))) for line in lines]
     return lines
 
 def raise_for_invalid_path(path):

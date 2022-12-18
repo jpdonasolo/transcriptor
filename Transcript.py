@@ -6,13 +6,10 @@ from AudioController import AudioController
 
 class StaticTranscript(tk.Toplevel):
     def __init__(self, master, transcript_path):
-        super().__init__(master)
+        tk.Toplevel.__init__(self, master)
         self.transcript = read_transcript(transcript_path)
 
     def setup(self):
-        # Vars
-        self.is_open = True
-
         # Screen config
         self.title("Transcript")
         self.geometry("500x400")
@@ -29,42 +26,26 @@ class StaticTranscript(tk.Toplevel):
         
         # Initial labels
         self.text_frame = tk.LabelFrame(self)
-        self.clean_labels()
+        self.text_frame.pack(anchor=tk.N, fill=tk.BOTH, padx=10, pady=10)        
         self.pack_labels()
     
-    def pack_labels(self, curr_sentence=None):
-        if curr_sentence is None:
-            curr_sentence = 0
-        
-        # Pack labels for the current, previous and next 5 sentences
-        # If current_sentence is less than 5, pack the first 10 sentences
-        # If current_sentence is greater than len(transcript) - 5, pack the last 10 sentences
-        if curr_sentence < 5:
-            start_sentence = 0
-            end_sentence = 10
-        elif curr_sentence > len(self.transcript) - 5:
-            start_sentence = len(self.transcript) - 10
-            end_sentence = len(self.transcript)
-        else:
-            start_sentence = curr_sentence - 5
-            end_sentence = curr_sentence + 5
-
+    def pack_labels(self):
         # Pack the sentences and highlight the current one
-        for sentence_idx in range(start_sentence, end_sentence):
-            start_timestamp, _, sentence = self.transcript[sentence_idx]
-            tk.Label(
+        for sentence_idx in range(10):
+            start_timestamp, _, sentence, been_modified = self.transcript[sentence_idx]
+            bold = sentence_idx == 0
+            self.pack_label(start_timestamp, sentence, been_modified, bold)
+
+    def pack_label(self, start_timestamp, sentence, been_modified, bold):
+        timestamp = f"[{seconds_to_minutes_and_seconds(start_timestamp)}]"
+        tk.Label(
                 self.text_frame, 
-                text=f"[{seconds_to_minutes_and_seconds(start_timestamp)}] {sentence}",
+                text=timestamp + sentence,
+                bg="red" if been_modified else None,
                 wraplength=450,
                 anchor=tk.W,
-                font=("Helvetica", 12, "bold") if sentence_idx == curr_sentence 
-                                               else None).pack(anchor=tk.W)
-
-    def clean_labels(self):
-        for widget in self.text_frame.winfo_children():
-            widget.destroy()
-        self.text_frame.pack_forget()
-        self.text_frame.pack(anchor=tk.N, fill=tk.BOTH, padx=10, pady=10)
+                font=("Helvetica", 12, "bold") if bold else None
+            ).pack(anchor=tk.W)
 
     def on_closing(self):        
         self.destroy()
@@ -91,6 +72,36 @@ class Transcript(StaticTranscript):
         self.clean_labels()
         self.pack_labels(curr_sentence)
 
+    def clean_labels(self):
+        for widget in self.text_frame.winfo_children():
+            widget.destroy()
+        self.text_frame.pack_forget()
+        self.text_frame.pack(anchor=tk.N, fill=tk.BOTH, padx=10, pady=10)
+    
+    def pack_labels(self, curr_sentence=None):
+        if curr_sentence is None:
+            StaticTranscript.pack_labels(self)
+            return
+        
+        # Pack labels for the current, previous and next 5 sentences
+        # If current_sentence is less than 5, pack the first 10 sentences
+        # If current_sentence is greater than len(transcript) - 5, pack the last 10 sentences
+        if curr_sentence < 5:
+            start_sentence = 0
+            end_sentence = 10
+        elif curr_sentence > len(self.transcript) - 5:
+            start_sentence = len(self.transcript) - 10
+            end_sentence = len(self.transcript)
+        else:
+            start_sentence = curr_sentence - 5
+            end_sentence = curr_sentence + 5
+
+        # Pack the sentences and highlight the current one
+        for sentence_idx in range(start_sentence, end_sentence):
+            start_timestamp, _, sentence, been_modified = self.transcript[sentence_idx]
+            bold = sentence_idx == curr_sentence
+            self.pack_label(start_timestamp, sentence, been_modified, bold)
+
     def seek(self, event):
         curr_sentence = self.player.curr_sentence
 
@@ -109,8 +120,8 @@ class Transcript(StaticTranscript):
         if not 0 <= new_sentence < len(self.transcript):
             return
 
-        start_timestamp, _, _ = self.transcript[new_sentence]
-        self.player.set_sentence_and_time(new_sentence, int(start_timestamp))
+        start_timestamp, *_= self.transcript[new_sentence]
+        self.player.set_sentence_and_time(new_sentence, start_timestamp)
     
     def pause_resume(self):
         self.player.pause_resume()

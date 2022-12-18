@@ -107,7 +107,7 @@ class AudioController(AudioPlayer, Subject):
 
                 end_timestamp = self.transcript[self.curr_sentence][1]
 
-                if int(time) + .05 >= int(end_timestamp):
+                if time + .05 >= end_timestamp:
                     self.curr_sentence += 1
                 self.time_nav_mutex.release()
         
