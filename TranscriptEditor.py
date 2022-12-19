@@ -7,6 +7,7 @@ from AudioController import AudioController
 class StaticTranscript(tk.Toplevel):
     def __init__(self, master, transcript_path):
         tk.Toplevel.__init__(self, master)
+        self.transcript_path = transcript_path
         self.transcript = read_transcript(transcript_path)
 
     def setup(self):
@@ -22,7 +23,8 @@ class StaticTranscript(tk.Toplevel):
         self.bind("<Control-e>", lambda e: self.on_closing())
 
         # Entry
-        tk.Entry(self).pack(anchor=tk.S, fill=tk.X, padx=10, pady=10)
+        self.entry = tk.Entry(self)
+        self.entry.pack(anchor=tk.S, fill=tk.X, padx=10, pady=10)
         
         # Initial labels
         self.text_frame = tk.LabelFrame(self)
@@ -129,3 +131,48 @@ class Transcript(StaticTranscript):
     def on_closing(self):
         super().on_closing()
         self.player.stop()
+
+class TranscriptEditor(Transcript):
+    def __init__(self, master, audio_controller: AudioController, transcript_path):
+        Transcript.__init__(self, master, audio_controller, transcript_path)
+        self.sentence_being_edited = None
+
+    def setup(self):
+        Transcript.setup(self)
+
+        # Bindings
+        self.bind("<Control-s>", lambda e: self.save_transcript())
+        self.bind("<Control-m>", lambda e: self.modify_sentence())
+        # self.bind("<Control-d>", lambda e: self.delete_sentence())
+        
+        # Entry
+        self.entry.bind("<Control-Return>", lambda e: self.save_sentence(self.player.curr_sentence))
+    
+    def modify_sentence(self):
+        self.player.pause()
+        self.sentence_being_edited = self.player.curr_sentence
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, self.transcript[self.sentence_being_edited][2])
+        self.entry.focus_set()
+
+    def save_sentence(self, curr_sentence):
+        if self.sentence_being_edited is None:
+            return
+        
+        sentence = self.entry.get()
+        
+        self.transcript[self.sentence_being_edited][2] = sentence
+        self.transcript[self.sentence_being_edited][3] = True
+        self.sentence_being_edited = None
+
+        self.update(curr_sentence)
+        
+        self.entry.delete(0, tk.END)
+        self.focus_set()
+
+    def save_transcript(self):
+        save_transcript(self.transcript, self.transcript_path)
+    
+    def on_closing(self):
+        self.save_transcript()
+        Transcript.on_closing(self)
