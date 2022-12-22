@@ -29,19 +29,27 @@ class AudioPlayer:
         self.player = vlc.MediaPlayer(audio_path)
         self.time_nav_mutex = RLock()
 
+        self.paused_or_resumed = Event()
+        self.is_running = Event()
+
     def pause_resume(self):
-        if self.player.is_playing():
+        self.paused_or_resumed.set()
+        if self.is_running.is_set():
+            self.is_running.clear()
             self.player.pause()
         else:
+            self.is_running.set()
             self.player.play()
 
     def exit(self):
         self.player.stop()
     
     def pause(self):
+        self.is_running.clear()
         self.player.pause()
     
     def play(self):
+        self.is_running.set()
         self.player.play()
     
     def get_time(self):
@@ -54,9 +62,6 @@ class AudioPlayer:
         self.time_nav_mutex.acquire()
         self.player.set_time(time * 1000)
         self.time_nav_mutex.release()
-    
-    def is_playing(self):
-        return self.player.is_playing()
 
 class AudioController(AudioPlayer, Subject):
 
@@ -69,10 +74,8 @@ class AudioController(AudioPlayer, Subject):
         self.curr_sentence_mutex = RLock()
         self._curr_sentence = 0
 
-        self.a = Event()
-
-        self.is_running_mutex = RLock()
-        self.is_running = False
+        self.is_thread_alive_mutex = RLock()
+        self.is_thread_alive = False
         self.thread = None
 
         self.start()
@@ -90,8 +93,9 @@ class AudioController(AudioPlayer, Subject):
         self._curr_sentence = sentence
         self.curr_sentence_mutex.release()
         self.notify(sentence)
-    
+
     def set_sentence_and_time(self, new_sentence, time):
+        self.paused_or_resumed.set()
         self.pause()
         self.set_time(time)
         self.curr_sentence = new_sentence
@@ -99,15 +103,16 @@ class AudioController(AudioPlayer, Subject):
     
     def start(self):
         def _run():
-            while self.is_running:
-                self.time_nav_mutex.acquire()
+            while self.is_thread_alive:
+                self.is_running.wait()
+                
                 time = self.get_time()
-
                 end_timestamp = self.transcript[self.curr_sentence][1]
 
-                if time + .05 >= end_timestamp:
-                    self.curr_sentence += 1
-                self.time_nav_mutex.release()
+                if self.paused_or_resumed.wait(end_timestamp - time):
+                    self.paused_or_resumed.clear()
+                    continue
+                self.curr_sentence += 1
         
         self.thread = Thread(target=_run)
         self.start_thread()
@@ -117,14 +122,16 @@ class AudioController(AudioPlayer, Subject):
         AudioPlayer.exit(self)
 
     def start_thread(self):
-        self.is_running_mutex.acquire()
-        self.is_running = True
-        self.is_running_mutex.release()
+        self.is_thread_alive_mutex.acquire()
+        self.is_thread_alive = True
+        self.is_thread_alive_mutex.release()
         self.thread.start()
 
     def kill_thread(self):
-        self.is_running_mutex.acquire()
-        self.is_running = False
-        self.is_running_mutex.release()
+        self.is_thread_alive_mutex.acquire()
+        self.is_thread_alive = False
+        self.is_thread_alive_mutex.release()
+        self.is_running.set()
+        self.paused_or_resumed.set()
         if self.thread:
             self.thread.join()

@@ -149,7 +149,6 @@ class TranscriptEditor(Transcript):
         self.entry.bind("<Control-Return>", lambda e: self.save_sentence(self.player.curr_sentence))
     
     def modify_sentence(self):
-        self.player.pause()
         self.sentence_being_edited = self.player.curr_sentence
         self.entry.delete(0, tk.END)
         self.entry.insert(0, self.transcript[self.sentence_being_edited][2])
