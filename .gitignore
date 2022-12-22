@@ -1,0 +1,6 @@
+*.txt
+*.mp4
+*.m4a
+
+__pycache__
+transcriptor-venv

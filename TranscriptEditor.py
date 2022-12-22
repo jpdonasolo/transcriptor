@@ -130,7 +130,7 @@ class Transcript(StaticTranscript):
     
     def on_closing(self):
         super().on_closing()
-        self.player.stop()
+        self.player.exit()
 
 class TranscriptEditor(Transcript):
     def __init__(self, master, audio_controller: AudioController, transcript_path):

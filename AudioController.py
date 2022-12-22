@@ -1,7 +1,6 @@
 import vlc
 
-from threading import RLock
-from threading import Thread
+from threading import Thread, RLock, Event
 
 from utils import read_transcript
 
@@ -36,7 +35,7 @@ class AudioPlayer:
         else:
             self.player.play()
 
-    def stop(self):
+    def exit(self):
         self.player.stop()
     
     def pause(self):
@@ -70,6 +69,8 @@ class AudioController(AudioPlayer, Subject):
         self.curr_sentence_mutex = RLock()
         self._curr_sentence = 0
 
+        self.a = Event()
+
         self.is_running_mutex = RLock()
         self.is_running = False
         self.thread = None
@@ -97,9 +98,6 @@ class AudioController(AudioPlayer, Subject):
         self.play()
     
     def start(self):
-
-        self.stop_thread()
-
         def _run():
             while self.is_running:
                 self.time_nav_mutex.acquire()
@@ -114,9 +112,9 @@ class AudioController(AudioPlayer, Subject):
         self.thread = Thread(target=_run)
         self.start_thread()
 
-    def stop(self):
-        self.stop_thread()
-        AudioPlayer.stop(self)
+    def exit(self):
+        self.kill_thread()
+        AudioPlayer.exit(self)
 
     def start_thread(self):
         self.is_running_mutex.acquire()
@@ -124,7 +122,7 @@ class AudioController(AudioPlayer, Subject):
         self.is_running_mutex.release()
         self.thread.start()
 
-    def stop_thread(self):
+    def kill_thread(self):
         self.is_running_mutex.acquire()
         self.is_running = False
         self.is_running_mutex.release()
