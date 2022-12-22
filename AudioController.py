@@ -74,11 +74,8 @@ class AudioController(AudioPlayer, Subject):
         self.curr_sentence_mutex = RLock()
         self._curr_sentence = 0
 
-        self.is_thread_alive_mutex = RLock()
         self.is_thread_alive = False
         self.thread = None
-
-        self.start()
 
     @property
     def curr_sentence(self):
@@ -122,15 +119,11 @@ class AudioController(AudioPlayer, Subject):
         AudioPlayer.exit(self)
 
     def start_thread(self):
-        self.is_thread_alive_mutex.acquire()
         self.is_thread_alive = True
-        self.is_thread_alive_mutex.release()
         self.thread.start()
 
     def kill_thread(self):
-        self.is_thread_alive_mutex.acquire()
         self.is_thread_alive = False
-        self.is_thread_alive_mutex.release()
         self.is_running.set()
         self.paused_or_resumed.set()
         if self.thread:

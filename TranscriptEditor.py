@@ -147,6 +147,8 @@ class TranscriptEditor(Transcript):
         
         # Entry
         self.entry.bind("<Control-Return>", lambda e: self.save_sentence(self.player.curr_sentence))
+
+        self.player.start()
     
     def modify_sentence(self):
         self.sentence_being_edited = self.player.curr_sentence
