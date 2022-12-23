@@ -143,7 +143,7 @@ class TranscriptEditor(Transcript):
         # Bindings
         self.bind("<Control-s>", lambda e: self.save_transcript())
         self.bind("<Control-m>", lambda e: self.modify_sentence())
-        # self.bind("<Control-d>", lambda e: self.delete_sentence())
+        self.bind("<Control-d>", lambda e: self.delete_sentence())
         
         # Entry
         self.entry.bind("<Control-Return>", lambda e: self.save_sentence(self.player.curr_sentence))
@@ -156,7 +156,12 @@ class TranscriptEditor(Transcript):
         self.entry.insert(0, self.transcript[self.sentence_being_edited][2])
         self.entry.focus_set()
 
-    def save_sentence(self, curr_sentence):
+    def delete_sentence(self):
+        self.modify_sentence()
+        self.entry.delete(0, tk.END)
+        self.save_sentence()
+
+    def save_sentence(self):
         if self.sentence_being_edited is None:
             return
         
@@ -166,7 +171,7 @@ class TranscriptEditor(Transcript):
         self.transcript[self.sentence_being_edited][3] = True
         self.sentence_being_edited = None
 
-        self.update(curr_sentence)
+        self.update(self.player.curr_sentence)
         
         self.entry.delete(0, tk.END)
         self.focus_set()
