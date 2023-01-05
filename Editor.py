@@ -4,7 +4,7 @@ from utils import *
 from AudioController import AudioController
 
 
-class StaticTranscript(tk.Toplevel):
+class BaseEditorWindow(tk.Toplevel):
     def __init__(self, master, transcript_path):
         tk.Toplevel.__init__(self, master)
         self.transcript_path = transcript_path
@@ -52,13 +52,13 @@ class StaticTranscript(tk.Toplevel):
     def _on_closing(self):        
         self.destroy()
 
-class Transcript(StaticTranscript):
+class DynamicEditorWindow(BaseEditorWindow):
     def __init__(self, master, audio_controller: AudioController, transcript_path):
-        StaticTranscript.__init__(self, master, transcript_path)
+        BaseEditorWindow.__init__(self, master, transcript_path)
         self.player = audio_controller
     
     def setup(self):
-        StaticTranscript.setup(self)
+        BaseEditorWindow.setup(self)
 
         # Bindings
         self.bind("<Control-b>", lambda e: self.pause_resume())
@@ -106,7 +106,7 @@ class Transcript(StaticTranscript):
     
     def _pack_labels(self, curr_sentence=None):
         if curr_sentence is None:
-            StaticTranscript._pack_labels(self)
+            BaseEditorWindow._pack_labels(self)
             return
         
         # Pack labels for the current, previous and next 5 sentences
@@ -132,13 +132,13 @@ class Transcript(StaticTranscript):
         super()._on_closing()
         self.player._exit()
 
-class TranscriptEditor(Transcript):
+class Editor(DynamicEditorWindow):
     def __init__(self, master, audio_controller: AudioController, transcript_path):
-        Transcript.__init__(self, master, audio_controller, transcript_path)
+        DynamicEditorWindow.__init__(self, master, audio_controller, transcript_path)
         self.sentence_being_edited = None
 
     def setup(self):
-        Transcript.setup(self)
+        DynamicEditorWindow.setup(self)
 
         # Bindings
         self.bind("<Control-s>", lambda e: self.save_transcript())
@@ -181,4 +181,4 @@ class TranscriptEditor(Transcript):
     
     def _on_closing(self):
         self.save_transcript()
-        Transcript._on_closing(self)
+        DynamicEditorWindow._on_closing(self)

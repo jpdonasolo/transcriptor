@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from AudioController import AudioController
-from TranscriptEditor import TranscriptEditor
+from Editor import Editor
 from utils import *
 
 class App(tk.Tk):
@@ -78,11 +78,11 @@ class App(tk.Tk):
             return
 
         audio_controller = AudioController(audio_path, transcript_path)
-        transcript = TranscriptEditor(self, audio_controller, transcript_path)
-        transcript.setup()
+        editor = Editor(self, audio_controller, transcript_path)
+        editor.setup()
 
-        audio_controller.attach(transcript)
-        transcript.mainloop()
+        audio_controller.attach(editor)
+        editor.mainloop()
 
 if __name__ == "__main__":
     app = App()
