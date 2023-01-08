@@ -57,14 +57,14 @@ class App(tk.Tk):
 
         # Generate transcript button
         gen_tcpt_button = tk.Button(self, text="Generate\nTranscript",
-            command=lambda: self.transcript(audio_path.get(), transcript_path.get()))
+            command=lambda: self.make_transcript(audio_path.get(), transcript_path.get()))
         gen_tcpt_button.grid(row=2, column=0, padx=10, pady=20)
 
 
     def ask_file(self, **kwargs):
         return filedialog.askopenfilename(**kwargs)
 
-    def transcript(self, audio_path, transcript_path):
+    def make_transcript(self, audio_path, transcript_path):
 
         if audio_path == "" or transcript_path == "":
             audio_path = "/home/joao/Documents/transcriptor/aula.mp4"
